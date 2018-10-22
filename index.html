@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Next to an Interstate</title>
+  <script type="text/javascript">
+  </script>
+  <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.45.0/mapbox-gl.js"></script>
+  <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.45.0/mapbox-gl.css" rel="stylesheet" />
+  <style>
+    body { margin:0; padding:0; }
+    #map { position:absolute; top:0; bottom:0; width:100%; }
+    h1 {
+      text-align: center;
+      font-size: 10
+    }
+
+
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+  <script>
+  var _map         = null,
+      _centerLat   = 44.976665,
+      _centerLng   = -93.268653,
+      _dataFile    = "./homes-interstates-1000-2017.geojson",
+      _accessToken = "pk.eyJ1IjoiY2F0ZmVsa2UiLCJhIjoiY2puMTA4N3BqMjM3dTNrbzJqNzl6bGNqMSJ9.umpgZXSdng7MYBuM8T0IWQ",
+      _mapStyle    = "mapbox://styles/catfelke/cjn8w90651bj52smvzgiffhoc";
+
+    mapboxgl.accessToken = _accessToken;
+    _map = new mapboxgl.Map ({
+                               container: "map",
+                               style: _mapStyle,
+                               center: [_centerLng, _centerLat],
+                               zoom: 11.25
+    });
+
+    function init ()
+    {
+      _map.addSource ("markers-source", {
+                                         type: "geojson",
+                                         data: _dataFile
+      });
+
+      _map.addLayer (
+      {
+        "id": "markers",
+        "type": "circle",
+        "source": "markers-source",
+        "paint": {
+                  "circle-color":
+                  {
+                    property: "AdjustedSa",
+                    type: "interval",
+                    stops: [
+                        [100000, "#fee0d2"],
+                        [250000, "#fcae91"],
+                        [500000, "#fb6a4a"],
+                        [750000, "#de2d26"],
+                        [1000000, "#a50f15"]
+                    ]
+                    },
+                   "circle-radius": 5
+                 }
+         });
+
+      var popup
+
+      _map.on("mouseenter", "markers", function(e) {
+
+      var features = _map.queryRenderedFeatures(e.point, {
+          layers: ["markers"]
+      });
+      if (!features.length) {
+          return;
+      }
+      var feature = features[0];
+      popup = new mapboxgl.Popup ()
+                            .setLngLat(_map.unproject  (e.point))
+                            .setHTML("<h3>The costs of </h3>" +
+                                "<ul>" +
+                                "<li>Grantee: <b>" + feature.properties.Grantee + "</b></li>"+
+                                "<li>Sale Price ($): <b>" + feature.properties.AdjustedSa + "</b></li>" +
+                                "<li>Type of Property: <b>" + feature.properties.PropType + "</b></li>" +
+                                "</ul>")
+                            .addTo(_map);
+
+      console.log(popup)
+
+
+      });
+
+    _map.on("mouseleave", "markers", function(e) {
+      //console.log(popup)
+        popup.remove();
+    });
+
+    }
+
+    _map.once ("style.load", function (e)
+    {
+      init ();
+      _map.addControl (new mapboxgl.NavigationControl ());
+    });
+
+  </script>
+  </body>
+</html>
